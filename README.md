@@ -1,4 +1,4 @@
-# Pull-Up Mania 💪
+# Pull-Up Mania
 
 A simple and effective strength training tracker built with Go, HTMX, and SQLite. Perfect for tracking your workouts with minimal complexity and maximum efficiency.
 
@@ -162,4 +162,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-**Happy lifting! 💪**
+**Happy lifting!**
