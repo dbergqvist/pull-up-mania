@@ -113,7 +113,7 @@
                                         <input type="number" 
                                                step="0.5" 
                                                name="exercise_{{$exerciseIndex}}_set_{{$setIndex}}_weight"
-                                               value="{{if gt $setLog.Weight 0}}{{$setLog.Weight}}{{end}}"
+                                               value="{{if gt $setLog.Weight 0.0}}{{$setLog.Weight}}{{end}}"
                                                class="set-input w-full px-2 py-1 border border-gray-300 rounded text-sm"
                                                placeholder="0">
                                     </div>

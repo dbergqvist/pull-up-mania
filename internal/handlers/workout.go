@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"pull-up-mania/internal/models"
 	"time"
@@ -10,10 +11,13 @@ import (
 // HomeHandler displays today's workout or a message if no workout is scheduled
 func (h *Handlers) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	today := getDayOfWeek()
+	log.Printf("DEBUG: Today is day %d, looking for workout plan", today)
 
 	// Get today's workout plan
 	workoutPlan, err := h.storage.GetWorkoutPlanForDay(today)
+	log.Printf("DEBUG: GetWorkoutPlanForDay result - plan: %v, error: %v", workoutPlan, err)
 	if err != nil {
+		log.Printf("DEBUG: No workout plan found, showing rest day")
 		// No workout scheduled for today
 		data := struct {
 			NoWorkout bool
@@ -26,9 +30,14 @@ func (h *Handlers) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("DEBUG: Workout plan found! Name: %s, Exercises: %d", workoutPlan.Name, len(workoutPlan.Exercises))
+
 	// Get or create today's workout session
+	log.Printf("DEBUG: Getting today's workout session...")
 	session, err := h.storage.GetTodaysWorkoutSession()
+	log.Printf("DEBUG: GetTodaysWorkoutSession result - session: %v, error: %v", session, err)
 	if err != nil {
+		log.Printf("DEBUG: Error getting workout session: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -84,14 +93,23 @@ func (h *Handlers) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Session     *models.WorkoutSession
 		WeightUnit  string
 		DayName     string
+		NoWorkout   bool
 	}{
 		WorkoutPlan: workoutPlan,
 		Session:     session,
 		WeightUnit:  settings.WeightUnit,
 		DayName:     time.Now().Format("Monday"),
+		NoWorkout:   false,
 	}
 
-	h.templates.ExecuteTemplate(w, "home.html", data)
+	log.Printf("DEBUG: Rendering template with workout data - WorkoutPlan: %s, Session ID: %s", data.WorkoutPlan.Name, data.Session.ID)
+	err = h.templates.ExecuteTemplate(w, "home.html", data)
+	if err != nil {
+		log.Printf("DEBUG: Template execution error: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Printf("DEBUG: Template rendered successfully")
 }
 
 // SaveWorkoutHandler handles saving workout progress via HTMX
