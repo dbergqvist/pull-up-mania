@@ -27,6 +27,40 @@ go.work.sum
 # env file
 .env
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+workouts.db
+
+# Testing files
+cookies.txt
+*.tmp
+
+# Compiled binaries
+main
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock

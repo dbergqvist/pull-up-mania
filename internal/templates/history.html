@@ -1,0 +1,139 @@
+{{define "history.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pull-Up Mania</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <span class="text-2xl">💪</span>
+                        <span class="text-xl font-bold">Pull-Up Mania</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Today's Workout
+                    </a>
+                    <a href="/history" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        History
+                    </a>
+                    <a href="/admin" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+<div class="px-4 py-6 sm:px-0">
+    <div class="border-4 border-dashed border-gray-200 rounded-lg p-6">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">📊 Workout History</h1>
+            <p class="text-gray-600">Your workout sessions from the last 30 days</p>
+        </div>
+
+        {{if .Sessions}}
+            <div class="space-y-4">
+                {{range .Sessions}}
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 {{if .Completed}}border-green-500{{else}}border-yellow-500{{end}}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                {{.Date.Format "Monday, January 2, 2006"}}
+                            </h3>
+                            <p class="text-sm text-gray-600">{{.Date.Format "3:04 PM"}}</p>
+                        </div>
+                        <div class="text-right">
+                            {{if .Completed}}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    ✅ Completed
+                                </span>
+                            {{else}}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                    ⏳ In Progress
+                                </span>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        {{range .ExerciseLogs}}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-2">{{.ExerciseName}}</h4>
+                            <div class="space-y-1">
+                                {{range .Sets}}
+                                    {{if .Completed}}
+                                    <div class="text-sm text-gray-700">
+                                        <span class="font-medium">Set {{.SetNumber}}:</span>
+                                        {{if gt .Weight 0}}{{.Weight}}kg × {{end}}{{.Reps}} reps
+                                        <span class="text-green-600 ml-1">✓</span>
+                                    </div>
+                                    {{else}}
+                                    <div class="text-sm text-gray-400">
+                                        <span class="font-medium">Set {{.SetNumber}}:</span>
+                                        <span class="italic">Not completed</span>
+                                    </div>
+                                    {{end}}
+                                {{end}}
+                            </div>
+                            {{if .Notes}}
+                            <div class="mt-2 text-xs text-gray-600 italic">
+                                "{{.Notes}}"
+                            </div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+
+                    {{if .Notes}}
+                    <div class="bg-blue-50 rounded-lg p-3">
+                        <h5 class="text-sm font-medium text-blue-900 mb-1">Session Notes:</h5>
+                        <p class="text-sm text-blue-800">"{{.Notes}}"</p>
+                    </div>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="mt-8 bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">📈 30-Day Summary</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600">{{len .Sessions}}</div>
+                        <div class="text-sm text-gray-600">Total Sessions</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600">
+                            {{range .Sessions}}{{if .Completed}}✅{{end}}{{end}}
+                        </div>
+                        <div class="text-sm text-gray-600">Completed Sessions</div>
+                    </div>
+                </div>
+            </div>
+
+        {{else}}
+            <div class="text-center py-12">
+                <div class="text-6xl mb-4">📈</div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No workout history yet</h3>
+                <p class="text-gray-600 mb-4">Start your first workout to see your progress here!</p>
+                <a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    Start Your First Workout
+                </a>
+            </div>
+        {{end}}
+    </div>
+</div>
+    </main>
+</body>
+</html>
+{{end}} 

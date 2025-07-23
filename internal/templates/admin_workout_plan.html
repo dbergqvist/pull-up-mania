@@ -1,0 +1,272 @@
+{{define "admin_workout_plan.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pull-Up Mania</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <span class="text-2xl">💪</span>
+                        <span class="text-xl font-bold">Pull-Up Mania</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Today's Workout
+                    </a>
+                    <a href="/history" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        History
+                    </a>
+                    <a href="/admin" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+<div class="px-4 py-6 sm:px-0">
+    <div class="border-4 border-dashed border-gray-200 rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">
+                {{if .IsEdit}}Edit Workout Plan{{else}}Create New Workout Plan{{end}}
+            </h1>
+            <a href="/admin" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                ← Back to Dashboard
+            </a>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            <input type="hidden" name="action" value="{{if .IsEdit}}edit{{else}}create{{end}}">
+            <input type="hidden" name="plan_id" value="{{.Plan.ID}}">
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">📋 Plan Details</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                            Plan Name *
+                        </label>
+                        <input type="text" 
+                               id="name" 
+                               name="name" 
+                               value="{{.Plan.Name}}"
+                               required
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., Upper Body Push">
+                    </div>
+                    
+                    <div>
+                        <label for="day_of_week" class="block text-sm font-medium text-gray-700 mb-1">
+                            Day of Week *
+                        </label>
+                        <select id="day_of_week" 
+                                name="day_of_week" 
+                                required
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            {{range $i, $dayName := .DayNames}}
+                                <option value="{{$i}}" {{if eq $.Plan.DayOfWeek $i}}selected{{end}}>{{$dayName}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" 
+                           id="active" 
+                           name="active" 
+                           {{if .Plan.Active}}checked{{end}}
+                           class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="active" class="ml-2 text-sm text-gray-700">
+                        Active (show in workout schedule)
+                    </label>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">🏋️ Exercises</h2>
+                    <button type="button" 
+                            onclick="addExercise()" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        ➕ Add Exercise
+                    </button>
+                </div>
+                
+                <div id="exercises-container">
+                    {{range $i, $exercise := .Plan.Exercises}}
+                    <div class="exercise-item border rounded-lg p-4 mb-4" data-index="{{$i}}">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Exercise {{$i}}</h3>
+                            <button type="button" 
+                                    onclick="removeExercise(this)" 
+                                    class="text-red-600 hover:text-red-900 text-sm">
+                                🗑️ Remove
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Exercise Name *</label>
+                                <input type="text" 
+                                       name="exercise_{{$i}}_name" 
+                                       value="{{$exercise.Name}}"
+                                       required
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="e.g., Pull-ups">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Sets *</label>
+                                <input type="number" 
+                                       name="exercise_{{$i}}_sets" 
+                                       value="{{$exercise.Sets}}"
+                                       min="1" 
+                                       max="10"
+                                       required
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Target Reps *</label>
+                                <input type="number" 
+                                       name="exercise_{{$i}}_reps" 
+                                       value="{{$exercise.Reps}}"
+                                       min="1" 
+                                       max="100"
+                                       required
+                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea name="exercise_{{$i}}_description" 
+                                      rows="2"
+                                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Exercise instructions or notes">{{$exercise.Description}}</textarea>
+                        </div>
+                    </div>
+                    {{end}}
+                    
+                    {{if not .Plan.Exercises}}
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">🏋️‍♂️</div>
+                        <p>No exercises added yet. Click "Add Exercise" to get started!</p>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="/admin" 
+                   class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-md text-sm font-medium">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm font-medium">
+                    {{if .IsEdit}}💾 Update Plan{{else}}✨ Create Plan{{end}}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let exerciseIndex = parseInt('{{len .Plan.Exercises}}') || 0;
+    
+    function addExercise() {
+        const container = document.getElementById('exercises-container');
+        const emptyMessage = container.querySelector('.text-center');
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+        
+        const exerciseHTML = `
+            <div class="exercise-item border rounded-lg p-4 mb-4" data-index="${exerciseIndex}">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Exercise ${exerciseIndex + 1}</h3>
+                    <button type="button" 
+                            onclick="removeExercise(this)" 
+                            class="text-red-600 hover:text-red-900 text-sm">
+                        🗑️ Remove
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Exercise Name *</label>
+                        <input type="text" 
+                               name="exercise_${exerciseIndex}_name" 
+                               required
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., Pull-ups">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sets *</label>
+                        <input type="number" 
+                               name="exercise_${exerciseIndex}_sets" 
+                               value="3"
+                               min="1" 
+                               max="10"
+                               required
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Target Reps *</label>
+                        <input type="number" 
+                               name="exercise_${exerciseIndex}_reps" 
+                               value="10"
+                               min="1" 
+                               max="100"
+                               required
+                               class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="exercise_${exerciseIndex}_description" 
+                              rows="2"
+                              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Exercise instructions or notes"></textarea>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', exerciseHTML);
+        exerciseIndex++;
+    }
+    
+    function removeExercise(button) {
+        const exerciseItem = button.closest('.exercise-item');
+        exerciseItem.remove();
+        
+        // Check if container is empty and show message
+        const container = document.getElementById('exercises-container');
+        if (container.children.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <div class="text-4xl mb-2">🏋️‍♂️</div>
+                    <p>No exercises added yet. Click "Add Exercise" to get started!</p>
+                </div>
+            `;
+        }
+    }
+</script>
+    </main>
+</body>
+</html>
+{{end}} 

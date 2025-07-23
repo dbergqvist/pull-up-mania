@@ -1,0 +1,9 @@
+name: pull-up-mania
+runtime: go121
+source: .
+entry_point: PullUpMania
+env_variables:
+  FUNCTION_TARGET: PullUpMania
+memory: 256MB
+timeout: 60s
+max_instances: 10 

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pull-Up Mania</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .exercise-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .exercise-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .set-input {
+            transition: border-color 0.2s ease-in-out;
+        }
+        .set-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .completed-set {
+            background-color: #dcfce7;
+            border-color: #16a34a;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <span class="text-2xl">💪</span>
+                        <span class="text-xl font-bold">Pull-Up Mania</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Today's Workout
+                    </a>
+                    <a href="/history" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        History
+                    </a>
+                    <a href="/admin" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {{block "content" .}}{{end}}
+    </main>
+
+    <div id="notifications" class="fixed top-20 right-4 z-50 space-y-2">
+        <!-- HTMX notifications will appear here -->
+    </div>
+
+    <script>
+        // Auto-hide success messages after 3 seconds
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.successful) {
+                const notification = event.detail.xhr.responseText;
+                if (notification.includes('alert-success') || notification.includes('alert-info')) {
+                    setTimeout(() => {
+                        const alerts = document.querySelectorAll('.alert');
+                        alerts.forEach(alert => {
+                            alert.style.opacity = '0';
+                            setTimeout(() => alert.remove(), 300);
+                        });
+                    }, 3000);
+                }
+            }
+        });
+
+        // Auto-save workout progress
+        function autoSave() {
+            const form = document.getElementById('workout-form');
+            if (form) {
+                htmx.trigger('#save-workout-btn', 'click');
+            }
+        }
+
+        // Save on input changes with debounce
+        let saveTimeout;
+        document.addEventListener('input', function(event) {
+            if (event.target.closest('#workout-form')) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(autoSave, 1000);
+            }
+        });
+    </script>
+</body>
+</html> 

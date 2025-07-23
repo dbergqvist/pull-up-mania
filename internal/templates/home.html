@@ -1,0 +1,217 @@
+{{define "home.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pull-Up Mania</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .exercise-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .exercise-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .set-input {
+            transition: border-color 0.2s ease-in-out;
+        }
+        .set-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .completed-set {
+            background-color: #dcfce7;
+            border-color: #16a34a;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            transition: opacity 0.3s ease;
+        }
+        .alert-success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #047857;
+        }
+        .alert-info {
+            background-color: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1d4ed8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2">
+                        <span class="text-2xl">💪</span>
+                        <span class="text-xl font-bold">Pull-Up Mania</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Today's Workout
+                    </a>
+                    <a href="/history" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        History
+                    </a>
+                    <a href="/admin" class="hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium">
+                        Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+<div class="px-4 py-6 sm:px-0">
+    <div class="border-4 border-dashed border-gray-200 rounded-lg p-6">
+        {{if .NoWorkout}}
+            <div class="text-center py-12">
+                <div class="text-6xl mb-4">😴</div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Rest Day</h1>
+                <p class="text-lg text-gray-600 mb-4">No workout scheduled for {{.DayName}}</p>
+                <p class="text-sm text-gray-500">Check the admin panel to set up your workout plan!</p>
+                <a href="/admin" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    Go to Admin Panel
+                </a>
+            </div>
+        {{else}}
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{.DayName}}'s Workout</h1>
+                <h2 class="text-xl text-gray-600">{{.WorkoutPlan.Name}}</h2>
+                {{if .Session.Completed}}
+                    <div class="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        ✅ Completed
+                    </div>
+                {{end}}
+            </div>
+
+            <form id="workout-form" hx-post="/save-workout" hx-target="#notifications" hx-swap="afterbegin">
+                <input type="hidden" name="session_id" value="{{.Session.ID}}">
+                
+                <div class="space-y-6">
+                    {{range $exerciseIndex, $exerciseLog := .Session.ExerciseLogs}}
+                    <div class="exercise-card bg-white shadow rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{$exerciseLog.ExerciseName}}</h3>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+                            {{range $setIndex, $setLog := $exerciseLog.Sets}}
+                            <div class="set-card border rounded-lg p-4 {{if $setLog.Completed}}completed-set{{else}}border-gray-200{{end}}">
+                                <div class="text-sm font-medium text-gray-700 mb-2">Set {{$setLog.SetNumber}}</div>
+                                
+                                <div class="space-y-2">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Weight ({{$.WeightUnit}})</label>
+                                        <input type="number" 
+                                               step="0.5" 
+                                               name="exercise_{{$exerciseIndex}}_set_{{$setIndex}}_weight"
+                                               value="{{if gt $setLog.Weight 0}}{{$setLog.Weight}}{{end}}"
+                                               class="set-input w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                               placeholder="0">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Reps</label>
+                                        <input type="number" 
+                                               name="exercise_{{$exerciseIndex}}_set_{{$setIndex}}_reps"
+                                               value="{{$setLog.Reps}}"
+                                               class="set-input w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                               placeholder="0">
+                                    </div>
+                                    
+                                    <div class="flex items-center">
+                                        <input type="checkbox" 
+                                               name="exercise_{{$exerciseIndex}}_set_{{$setIndex}}_completed"
+                                               {{if $setLog.Completed}}checked{{end}}
+                                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                        <label class="ml-2 text-xs text-gray-700">Completed</label>
+                                    </div>
+                                </div>
+                            </div>
+                            {{end}}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Exercise Notes</label>
+                            <textarea name="exercise_{{$exerciseIndex}}_notes" 
+                                      rows="2" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                      placeholder="How did this exercise feel? Any adjustments needed?">{{$exerciseLog.Notes}}</textarea>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+                <div class="mt-6 bg-white shadow rounded-lg p-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Session Notes</label>
+                    <textarea name="session_notes" 
+                              rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              placeholder="How was your overall workout? Any notes for next time?">{{.Session.Notes}}</textarea>
+                </div>
+
+                <div class="mt-6 flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        Progress is automatically saved as you type
+                    </div>
+                    <button type="submit" 
+                            id="save-workout-btn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        💾 Save Progress
+                    </button>
+                </div>
+            </form>
+        {{end}}
+    </div>
+</div>
+    </main>
+
+    <div id="notifications" class="fixed top-20 right-4 z-50 space-y-2">
+        <!-- HTMX notifications will appear here -->
+    </div>
+
+    <script>
+        // Auto-hide success messages after 3 seconds
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.successful) {
+                const notification = event.detail.xhr.responseText;
+                if (notification.includes('alert-success') || notification.includes('alert-info')) {
+                    setTimeout(() => {
+                        const alerts = document.querySelectorAll('.alert');
+                        alerts.forEach(alert => {
+                            alert.style.opacity = '0';
+                            setTimeout(() => alert.remove(), 300);
+                        });
+                    }, 3000);
+                }
+            }
+        });
+
+        // Auto-save workout progress
+        function autoSave() {
+            const form = document.getElementById('workout-form');
+            if (form) {
+                htmx.trigger('#save-workout-btn', 'click');
+            }
+        }
+
+        // Save on input changes with debounce
+        let saveTimeout;
+        document.addEventListener('input', function(event) {
+            if (event.target.closest('#workout-form')) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(autoSave, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
+{{end}} 
