@@ -74,7 +74,7 @@
                                     {{if .Completed}}
                                     <div class="text-sm text-gray-700">
                                         <span class="font-medium">Set {{.SetNumber}}:</span>
-                                        {{if gt .Weight 0}}{{.Weight}}kg × {{end}}{{.Reps}} reps
+                                        {{if gt .Weight 0}}{{.Weight}}kg × {{end}}{{.Reps}}{{if eq .Reps 0}} sec{{else}} reps{{end}}
                                         <span class="text-green-600 ml-1">✓</span>
                                     </div>
                                     {{else}}
